@@ -117,7 +117,7 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
   return (
     <div className="flex max-h-[600px] min-h-[600px] w-full max-w-[800px] flex-col overflow-hidden">
       <header className="flex w-full flex-shrink-0 items-center justify-between rounded-t-[20px] bg-white px-4 py-3">
-        <img className="h-8 w-[100px] object-contain sm:h-11 sm:w-[120px]" alt="Logo" src="/popup/logo.gif" />
+        <img className="h-8 w-[100px] object-contain sm:h-11 sm:w-[120px]" alt="Logo" src="/JOBTRAX_blue.png" />
 
         <Button
           className="rounded-[20px] bg-[#0076ff] px-4 py-2 hover:bg-[#0076ff]/90 sm:px-6 sm:py-3"

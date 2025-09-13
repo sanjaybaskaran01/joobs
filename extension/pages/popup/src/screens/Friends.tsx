@@ -206,7 +206,7 @@ export const Friends = ({ onBack, onNavigateToAddFriend }: FriendsProps): JSX.El
   return (
     <div className="flex w-full min-w-[350px] flex-col">
       <header className="flex w-full items-center justify-between rounded-t-[20px] border-b border-gray-100 bg-white px-4 py-3">
-        <img className="h-9 w-24" alt="Logo" src="/popup/logo.png" />
+        <img className="h-9 w-24" alt="Logo" src="/JOBTRAX_blue.png" />
 
         <Button className="h-auto rounded-[16px] bg-[#0076ff] px-4 py-2 hover:bg-[#0066dd]" onClick={onBack}>
           <div className="whitespace-nowrap text-base font-semibold leading-tight text-white">Back</div>

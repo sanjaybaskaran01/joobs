@@ -1,7 +1,7 @@
 {
   "name": "jobtrax",
-  "version": "0.5.0",
-  "description": "chrome extension boilerplate",
+  "version": "1.0.0",
+  "description": "Jobtrax",
   "license": "MIT",
   "private": true,
   "sideEffects": false,

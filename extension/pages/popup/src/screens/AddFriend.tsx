@@ -51,9 +51,9 @@ export const AddFriend = ({ onBack }: AddFriendProps): JSX.Element => {
     <div className="flex flex-col min-h-[600px] max-h-[600px] w-full max-w-[800px] overflow-hidden">
       <header className="flex w-full items-center justify-between px-4 py-3 bg-white rounded-t-[20px] flex-shrink-0">
         <img
-          className="w-[100px] h-8 sm:w-[120px] sm:h-11 object-contain"
+          className="h-8 sm:w-[120px] sm:h-11 object-contain"
           alt="Logo"
-          src="/popup/logo.gif"
+          src="/JOBTRAX_blue.png"
         />
 
         <Button 

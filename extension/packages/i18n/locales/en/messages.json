@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Chrome extension boilerplate developed with Vite, React and Typescript"
+    "message": "A gamified job application tracking system to motivate applicants to consistently apply for jobs."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Chrome extension boilerplate"
+    "message": "Jobtrax - Make job hunting fun"
   },
   "toggleTheme": {
     "message": "Toggle theme"

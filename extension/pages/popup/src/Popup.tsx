@@ -7,6 +7,7 @@ import { Friends } from './screens/Friends';
 import { Profile } from './screens/Profile';
 import { AddFriend } from './screens/AddFriend';
 import { forceRefreshApplications } from './api/api';
+import { FinalScreen } from './screens/Test';
 
 const ACCESS_TOKEN_KEY = 'job_tracker_access_token';
 const REFRESH_TOKEN_KEY = 'job_tracker_refresh_token';
@@ -15,7 +16,7 @@ const FIREBASE_TOKEN_KEY = 'job_tracker_firebase_token';
 
 const Popup = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'friends' | 'profile' | 'addFriend'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'friends' | 'profile' | 'addFriend'|'test'>('home');
 
   useEffect(() => {
     // Check for tokens in chrome.storage.local
