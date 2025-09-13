@@ -302,7 +302,7 @@ router.get(
           }
         }
         return {
-          icon: "",
+          icon: data.logo || "",
           company_name: data.company || "",
           last_updated: lastUpdated,
           status: data.status || "",

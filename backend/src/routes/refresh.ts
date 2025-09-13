@@ -70,7 +70,12 @@ async function fetchNewEmails(
 // --- Step 2: Parse email with Claude ---
 async function parseEmail(
   emailContent: EmailContent
-): Promise<{ company: string; position: string; status: string; logo: string }> {
+): Promise<{
+  company: string;
+  position: string;
+  status: string;
+  logo: string;
+}> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -87,7 +92,7 @@ async function parseEmail(
           role: "user",
           content: `The email may or may not be a job application email. If it is, extract the company, position name, and application status from the email below.
 Status must be one of: applied, OA, interview, offer, rejected, indeterminate. If the position is specific to a year, include it in the position name. Provide an image link to the company logo if possible. If the email is NOT a job application email, return "indeterminate" for all fields.
-Return JSON ONLY in the format: {"company": "...", "position": "...", "status": "...", "logo": "..."}
+Return JSON ONLY in the format: {"company": "...", "position": "...", "status": "...", "logo": "..."}. Do NOT include extra text outside the JSON such as "\`\`\`json"
 
 Email Subject: ${emailContent.subject}
 Email Sender: ${emailContent.sender}
@@ -107,7 +112,7 @@ ${emailContent.body}`,
 
   const data = await response.json();
   const content = data?.content?.[0]?.text;
-  console.log("Claude response content:", content);
+  console.log("Claude response content:", content, JSON.parse(content));
 
   try {
     return JSON.parse(content);
@@ -138,11 +143,27 @@ async function updateApplication(
     .get();
 
   if (existingSnap.empty) {
+    // Load base64 logos
+    let logoToUse = parsed.logo;
+    // if (!logoToUse || logoToUse === "indeterminate") {
+    // For now, always load Base64
+    console.log("Loading logo for", parsed.company);
+      try {
+        const logos = require("../companyLogos.json");
+        console.log("Available logos:", Object.keys(logos).slice(0, 10));
+        if (parsed.company && logos[parsed.company]) {
+          logoToUse = logos[parsed.company];
+        }
+      } catch (e) {
+        console.error("Could not load companyLogos.json", e);
+      }
+    // }
     await colRef.add({
       userId,
       company: parsed.company,
       position: parsed.position,
       status: parsed.status,
+      logo: logoToUse,
       applicationDate: date,
       statusHistory: [{ status: parsed.status, date: date }],
     });
@@ -390,6 +411,7 @@ router.post(
 
       for (const emailContent of emails) {
         const parsed = await parseEmail(emailContent);
+        console.log("potential parsed application:", emailContent, parsed);
         if (
           parsed.company !== "indeterminate" &&
           parsed.status !== "indeterminate" &&
@@ -398,7 +420,14 @@ router.post(
           parsed.status !== null &&
           parsed.position !== null
         ) {
-          const didUpdate = await updateApplication(userId, parsed, emailContent.timestamp ? new Date(emailContent.timestamp) : new Date());
+          console.log("Parsed application:", parsed);
+          const didUpdate = await updateApplication(
+            userId,
+            parsed,
+            emailContent.timestamp
+              ? new Date(emailContent.timestamp)
+              : new Date()
+          );
           if (didUpdate) updated = true;
         }
       }

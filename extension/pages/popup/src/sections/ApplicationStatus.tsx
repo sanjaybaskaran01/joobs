@@ -125,9 +125,15 @@ export const ApplicationStatusSection = (): JSX.Element => {
               <div className="flex w-full items-center justify-between gap-3">
                 <div className="inline-flex min-w-0 flex-1 items-center gap-3">
                   <div
-                    className="h-12 w-12 flex-shrink-0 rounded-lg border border-solid border-[#e0e0e0] bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: application.icon ? `url(${application.icon})` : 'none' }}>
-                    {!application.icon && (
+                    className="h-12 w-12 flex-shrink-0 rounded-lg border border-solid border-[#e0e0e0] bg-cover bg-center bg-no-repeat flex items-center justify-center"
+                  >
+                    {application.icon ? (
+                      <img
+                        src={application.icon.startsWith('data:') ? application.icon : `data:image/png;base64,${application.icon}`}
+                        alt={application.company_name + ' logo'}
+                        className="h-12 w-12 object-contain rounded-lg"
+                      />
+                    ) : (
                       <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100">
                         <span className="text-xs font-semibold text-gray-500">
                           {application.company_name.charAt(0).toUpperCase()}
