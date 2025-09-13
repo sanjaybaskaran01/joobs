@@ -97,79 +97,13 @@ router.get(
         return res.status(404).json({ error: "Friend not found" });
       const friendData = friendSnap.docs[0].data();
       const user_chart = friendData?.user_chart || { x: [], y: [] };
-      res.json({ x: user_chart.x, y: user_chart.y });
+      return res.json({ x: user_chart.x, y: user_chart.y });
     } catch (error) {
       console.error("Error in /friend_user_chart:", error);
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
-
-// --- API Route: Calculate and store current streak ---
-router.post("/streak", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.uid;
-    if (!userId) throw new Error("Missing userId from authMiddleware");
-
-    const db = getFirestore();
-    const existingAppsSnap = await db
-      .collection("jobApplications")
-      .where("userId", "==", userId)
-      .get();
-
-    // Extract and sort application dates
-    const appDates: Date[] = existingAppsSnap.docs
-      .map((doc) => {
-        const data = doc.data();
-        if (
-          data.applicationDate &&
-          typeof data.applicationDate.toDate === "function"
-        ) {
-          return data.applicationDate.toDate();
-        } else if (data.applicationDate) {
-          return new Date(data.applicationDate);
-        } else {
-          return null;
-        }
-      })
-      .filter((d): d is Date => d !== null)
-      .sort((a, b) => a.getTime() - b.getTime());
-    console.log("Application Dates for streak calculation:", appDates);
-    // Calculate streak based on unique days, counting consecutive days ending today
-    let streak = 0;
-    if (appDates.length > 0) {
-      // Get unique days in descending order
-      const uniqueDays = Array.from(new Set(appDates.map(toDayString))).sort(
-        (a, b) => new Date(b).getTime() - new Date(a).getTime()
-      );
-      const todayStr = toDayString(new Date());
-      let dayCursor = todayStr;
-      let i = 0;
-      while (i < uniqueDays.length) {
-        if (uniqueDays[i] === dayCursor) {
-          streak++;
-          // Move to previous day
-          const prev = new Date(dayCursor);
-          prev.setDate(prev.getDate() - 1);
-          dayCursor = toDayString(prev);
-          i++;
-        } else {
-          // Streak broken
-          break;
-        }
-      }
-    }
-
-    // Store streak in user's Firestore document
-    const userRef = db.collection("users").doc(userId);
-    await userRef.set({ currentStreak: streak }, { merge: true });
-
-    res.json({ success: true, currentStreak: streak });
-  } catch (error) {
-    console.error("Error in /refresh/streak:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
 
 // --- API Route: Get friends info ---
 router.get("/friends", authMiddleware, async (req: Request, res: Response) => {
@@ -208,37 +142,25 @@ router.get("/friends", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-// --- API Route: Get user's XP ---
-router.get("/xp", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.uid;
-    if (!userId) throw new Error("Missing userId from authMiddleware");
-    const db = getFirestore();
-    const userSnap = await db.collection("users").doc(userId).get();
-    const xp = userSnap.exists ? userSnap.data()?.xp || 0 : 0;
-    res.json({ xp });
-  } catch (error) {
-    console.error("Error in /xp:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// --- API Route: Get user's invite_code ---
+// --- API Route: Get user's details (xp and invite_code) ---
 router.get(
-  "/invite_code",
+  "/user_details",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.uid;
       if (!userId) throw new Error("Missing userId from authMiddleware");
+
       const db = getFirestore();
       const userSnap = await db.collection("users").doc(userId).get();
-      const invite_code = userSnap.exists
-        ? userSnap.data()?.invite_code || ""
-        : "";
-      res.json({ invite_code });
+      const data = userSnap.exists ? userSnap.data() : null;
+
+      const xp = data?.xp || 0;
+      const invite_code = data?.invite_code || "";
+
+      res.json({ xp, invite_code });
     } catch (error) {
-      console.error("Error in /invite_code:", error);
+      console.error("Error in /user_details:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
@@ -276,37 +198,74 @@ router.get(
   }
 );
 
-// --- API Route: Get user's job application dates ---
-router.get(
+// --- API Route: Calculate and store current streak ---
+router.post(
   "/jobs_applied_dates",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.uid;
       if (!userId) throw new Error("Missing userId from authMiddleware");
+
       const db = getFirestore();
       const appsSnap = await db
         .collection("jobApplications")
         .where("userId", "==", userId)
         .get();
-      const dates: string[] = appsSnap.docs
+
+      // Convert docs to Date[] (sorted ascending)
+      const appDates: Date[] = appsSnap.docs
         .map((doc) => {
           const data = doc.data();
           if (
             data.applicationDate &&
             typeof data.applicationDate.toDate === "function"
           ) {
-            return data.applicationDate.toDate().toISOString().split("T")[0];
+            return data.applicationDate.toDate();
           } else if (data.applicationDate) {
-            return new Date(data.applicationDate).toISOString().split("T")[0];
+            return new Date(data.applicationDate);
           } else {
             return null;
           }
         })
-        .filter((d): d is string => d !== null);
-      // Sort
-      dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-      res.json({ dates });
+        .filter((d): d is Date => d !== null)
+        .sort((a, b) => a.getTime() - b.getTime());
+
+      // Build unique YYYY-MM-DD date strings (ascending)
+      const uniqueDates: string[] = Array.from(
+        new Set(appDates.map((d) => toDayString(d)))
+      ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+      console.log("Unique application dates for streak calculation:", uniqueDates);
+
+      // Calculate streak based on unique days, counting consecutive days ending today
+      let streak = 0;
+      if (uniqueDates.length > 0) {
+        // Sort descending to check from today backwards
+        const uniqueDesc = [...uniqueDates].sort(
+          (a, b) => new Date(b).getTime() - new Date(a).getTime()
+        );
+        const todayStr = toDayString(new Date());
+        let dayCursor = todayStr;
+        let i = 0;
+        while (i < uniqueDesc.length) {
+          if (uniqueDesc[i] === dayCursor) {
+            streak++;
+            const prev = new Date(dayCursor);
+            prev.setDate(prev.getDate() - 1);
+            dayCursor = toDayString(prev);
+            i++;
+          } else {
+            break;
+          }
+        }
+      }
+
+      // Store streak in user's Firestore document
+      const userRef = db.collection("users").doc(userId);
+      await userRef.set({ currentStreak: streak }, { merge: true });
+
+      res.json({ dates: uniqueDates, currentStreak: streak });
     } catch (error) {
       console.error("Error in /jobs_applied_dates:", error);
       res.status(500).json({ error: "Internal server error" });

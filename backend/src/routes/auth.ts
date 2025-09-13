@@ -117,6 +117,54 @@ router.get('/me', async (req: Request, res: Response) => {
 });
 
 /**
+ * Refresh Firebase ID token using refresh token
+ */
+router.post('/refresh-token', async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'Refresh token is required' });
+    }
+
+    // Exchange refresh token for new ID token using Firebase REST API
+    const response = await fetch(
+      `https://securetoken.googleapis.com/v1/token?key=${process.env.FIREBASE_WEB_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          grant_type: "refresh_token",
+          refresh_token: refreshToken,
+        }),
+      }
+    );
+
+    const data: any = await response.json();
+
+    if (!data.id_token) {
+      return res.status(400).json({ 
+        error: 'Failed to refresh token',
+        details: data
+      });
+    }
+
+    return res.json({
+      success: true,
+      tokens: {
+        idToken: data.id_token,
+        refreshToken: data.refresh_token,
+        expiresIn: data.expires_in
+      },
+      message: 'Token refreshed successfully'
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return res.status(500).json({ error: 'Failed to refresh token' });
+  }
+});
+
+/**
  * Step 4: Test endpoint for Firebase Auth
  */
 // router.get("/test-firebase-connection", async (_req, res) => {
