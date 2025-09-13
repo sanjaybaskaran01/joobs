@@ -14,8 +14,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize Firebase Admin
-// initializeFirebase();
+// ✅ Initialize Firebase Admin SDK once at startup
+initializeFirebase();
 
 // Middleware
 app.use(helmet());
@@ -62,4 +62,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-
