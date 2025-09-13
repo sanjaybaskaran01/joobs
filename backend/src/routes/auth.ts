@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { getAuthUrl, getTokensFromCode, getUserInfo } from '../config/google';
 // import { getAuth, getFirestore } from '../config/firebase';
-import { createCustomToken } from '../services/authService';
 import { google } from 'googleapis';
+import { createGmailService, getDaysAgoTimestamp } from '../services/gmailService';
 
 const router = Router();
 
@@ -174,13 +174,15 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     let emailData = null;
     let emailError = null;
     
-    try {
-      emailData = await fetchRecentEmails(tokens.access_token, 10);
-      console.log(`Fetched ${emailData.emails.length} recent emails for user: ${userInfo.email}`);
-    } catch (error) {
-      console.error('Error fetching emails during auth:', error);
-      emailError = error instanceof Error ? error.message : 'Failed to fetch emails';
-    }
+    const gmailService = createGmailService(tokens.access_token)
+    
+
+    const recentEmails = await gmailService.fetchRecentEmails({
+    maxResults: 10,
+    labelIds: ['INBOX']
+  });
+
+    emailData = recentEmails
 
     // Return user info, tokens, and email data
     const response: any = {
