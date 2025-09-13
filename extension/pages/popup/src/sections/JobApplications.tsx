@@ -10,7 +10,7 @@ interface JobApplicationsTrackerSectionProps {
 export const JobApplicationsTrackerSection = ({
   onNavigateToFriends,
 }: JobApplicationsTrackerSectionProps): JSX.Element => {
-  const [streakData, setStreakData] = useState<{ dates: string[]; currentStreak: number } | null>(null);
+  const [streakData, setStreakData] = useState<{ dates: string[]; streak: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export const JobApplicationsTrackerSection = ({
       } catch (error) {
         console.error('Failed to fetch jobs applied data:', error);
         // Set default values if API fails
-        setStreakData({ dates: [], currentStreak: 0 });
+        setStreakData({ dates: [], streak: 0 });
       } finally {
         setLoading(false);
       }
@@ -85,7 +85,7 @@ export const JobApplicationsTrackerSection = ({
         <div className="flex w-full items-center justify-between gap-4">
           <div className="flex flex-shrink-0 flex-col items-start justify-center gap-1">
             <div className="text-5xl font-bold leading-tight text-[#0076ff]">
-              {loading ? '--' : streakData?.currentStreak || 0}
+              {loading ? '--' : streakData?.streak || 0}
             </div>
 
             <div className="text-lg font-semibold leading-tight text-[#0076ff]">streak days</div>

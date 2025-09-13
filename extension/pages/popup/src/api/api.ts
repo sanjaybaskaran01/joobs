@@ -66,7 +66,7 @@ export function setAuthToken(token: string | null) {
 
 export async function fetchUserJobsApplied() {
   try {
-    const response = await api.post<{ dates: string[]; currentStreak: number, totalApplications: number }>('/api/v1/jobs_applied_dates');
+    const response = await api.post<{ dates: string[]; streak: number, totalApplications: number }>('/api/v1/jobs_applied_dates');
     return response.data;
   } catch (error) {
     console.error('Error fetching user jobs applied:', error);

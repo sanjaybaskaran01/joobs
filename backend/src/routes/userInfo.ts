@@ -263,9 +263,9 @@ router.post(
 
       // Store streak in user's Firestore document
       const userRef = db.collection("users").doc(userId);
-      await userRef.set({ currentStreak: streak }, { merge: true });
+      await userRef.set({ streak: streak }, { merge: true });
 
-      res.json({ dates: uniqueDates, currentStreak: streak, totalApplications: appDates.length });
+      res.json({ dates: uniqueDates, streak: streak, totalApplications: appDates.length });
     } catch (error) {
       console.error("Error in /jobs_applied_dates:", error);
       res.status(500).json({ error: "Internal server error" });
