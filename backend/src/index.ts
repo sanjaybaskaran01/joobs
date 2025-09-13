@@ -7,6 +7,7 @@ import { initializeFirebase } from './config/firebase';
 import { authRoutes } from './routes/auth';
 import { emailRoutes } from './routes/emails';
 import { errorHandler } from './middleware/errorHandler';
+import refreshRoutes from "./routes/refresh";
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/auth', authRoutes);
 app.use('/api/emails', emailRoutes);
+app.use("/api/v1", refreshRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
