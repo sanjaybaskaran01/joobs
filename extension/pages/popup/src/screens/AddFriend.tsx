@@ -53,7 +53,7 @@ export const AddFriend = ({ onBack }: AddFriendProps): JSX.Element => {
         <img
           className="w-[100px] h-8 sm:w-[120px] sm:h-11 object-contain"
           alt="Logo"
-          src="/popup/logo.png"
+          src="/popup/logo.gif"
         />
 
         <Button 
