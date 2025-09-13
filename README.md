@@ -19,6 +19,7 @@
 <a href="./demo/deck.pdf">demo/deck.pdf</a>
 
 
+<iframe style="border: 1px solid rgba(0, 0, 0, 0.1);" width="800" height="450" src="https://embed.figma.com/design/wXLhpMAoLp2d2rDrRd2NEA/JOOBS--Copy-?node-id=2001-9549&embed-host=share" allowfullscreen></iframe>
 
 
 ## 📖 Overview  
