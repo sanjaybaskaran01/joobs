@@ -41,7 +41,7 @@ export const HeaderSection = ({ onNavigateToProfile }: HeaderSectionProps): JSX.
       <div className="inline-flex items-center justify-end gap-2">
         <div className="inline-flex items-center gap-1.5">
           <div className="text-base font-bold leading-tight text-[#0076ff]">
-            {loading ? 'LV.--' : `LV.${Math.floor((userProfile?.xp || 0) / 100)}`}
+            {loading ? 'LV.--' : `LV.${Math.floor((userProfile?.xp || 0) / 100) + 1}`}
           </div>
 
           <div className="text-base font-bold leading-tight text-[#0076ff]">Job Hunter</div>
