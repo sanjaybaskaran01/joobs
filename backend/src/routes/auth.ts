@@ -3,6 +3,8 @@ import { getAuthUrl, getTokensFromCode, getUserInfo } from '../config/google';
 // import { getAuth, getFirestore } from '../config/firebase';
 import { createCustomToken } from '../services/authService';
 import { google } from 'googleapis';
+import { getAdminAuth, getAdminFirestore } from "../config/firebase";
+
 
 const router = Router();
 
