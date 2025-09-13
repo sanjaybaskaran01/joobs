@@ -1,9 +1,9 @@
 import { ChevronRightIcon } from 'lucide-react';
-import React, { JSX, useState, useEffect } from 'react';
+import React, { JSX, useState } from 'react';
 import { Badge } from '../components/badge';
 import { Button } from '../components/button';
 import { Separator } from '../components/separator';
-import { fetchApplicationStatuses } from '../api/api';
+import { useApplicationStatuses, useRefreshApplicationStatuses } from '../hooks/useApiQueries';
 
 const filterOptions = [
   { label: 'All', value: 'all' },
@@ -42,25 +42,10 @@ const getStatusColor = (status: string): string => {
 
 export const ApplicationStatusSection = (): JSX.Element => {
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [applications, setApplications] = useState<ApplicationData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchApplicationStatuses();
-        setApplications(data.applications);
-      } catch (error) {
-        console.error('Failed to fetch applications:', error);
-        setApplications([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchApplications();
-  }, []);
+  const { data: applicationsData, isLoading: loading } = useApplicationStatuses();
+  const refreshMutation = useRefreshApplicationStatuses();
+  
+  const applications = applicationsData?.applications || [];
 
   const filteredAndSortedApplications = applications
     .filter(application => {

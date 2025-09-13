@@ -1,7 +1,7 @@
 import { CheckCircleIcon } from 'lucide-react';
-import  { JSX, useState, useEffect } from 'react';
+import  { JSX } from 'react';
 import { Button } from '../components/button';
-import { fetchUserJobsApplied } from '../api/api';
+import { useUserJobsApplied } from '../hooks/useApiQueries';
 
 interface JobApplicationsTrackerSectionProps {
   onNavigateToFriends: () => void;
@@ -10,26 +10,7 @@ interface JobApplicationsTrackerSectionProps {
 export const JobApplicationsTrackerSection = ({
   onNavigateToFriends,
 }: JobApplicationsTrackerSectionProps): JSX.Element => {
-  const [streakData, setStreakData] = useState<{ dates: string[]; currentStreak: number } | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStreakData = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchUserJobsApplied();
-        setStreakData(data);
-      } catch (error) {
-        console.error('Failed to fetch jobs applied data:', error);
-        // Set default values if API fails
-        setStreakData({ dates: [], currentStreak: 0 });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStreakData();
-  }, []);
+  const { data: streakData, isLoading: loading, error } = useUserJobsApplied();
 
   // Get rotating 5-day view with today in the middle
   const getRotatingWeekDays = () => {

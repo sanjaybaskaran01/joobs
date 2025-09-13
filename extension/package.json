@@ -38,8 +38,11 @@
     "postinstall": "pnpm copy-env"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.87.4",
+    "@tanstack/react-query-devtools": "^5.87.4",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.9",
@@ -51,7 +54,9 @@
     "@types/react": "^19.1.5",
     "@types/react-dom": "^19.1.5",
     "@typescript-eslint/parser": "^8.32.1",
+    "@vitejs/plugin-react": "^5.0.2",
     "autoprefixer": "^10.4.21",
+    "babel-plugin-react-compiler": "19.1.0-rc.3",
     "cross-env": "^7.0.3",
     "deepmerge": "^4.3.1",
     "eslint": "^9.27.0",

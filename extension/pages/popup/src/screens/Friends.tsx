@@ -1,4 +1,4 @@
-import React, { JSX, useState, useEffect } from 'react';
+import React, { JSX } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/avatar';
 import { Button } from '../components/button';
 import { Card, CardContent } from '../components/card';
 import { Separator } from '../components/separator';
-import { fetchUserChart } from '../api/api';
+import { useUserChart, useUserFriends } from '../hooks/useApiQueries';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -25,25 +25,8 @@ interface FriendsProps {
 }
 
 export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
-  const [chartData, setChartData] = useState<{ x: string[]; y: number[] } | null>(null);
-  const [chartLoading, setChartLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchChartData = async () => {
-      try {
-        setChartLoading(true);
-        const data = await fetchUserChart();
-        setChartData(data);
-      } catch (error) {
-        console.error('Failed to fetch chart data:', error);
-        setChartData(null);
-      } finally {
-        setChartLoading(false);
-      }
-    };
-
-    fetchChartData();
-  }, []);
+  const { data: chartData, isLoading: chartLoading } = useUserChart();
+  const { data: friendsData, isLoading: friendsLoading } = useUserFriends();
 
   // Format dates for better display
   const formatDate = (dateString: string) => {
@@ -138,7 +121,7 @@ export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
     },
   };
 
-  const friendsData = [
+  const mockFriendsData = [
     {
       name: 'Pzc',
       level: 'LV.12 Job Hunter',
@@ -245,7 +228,7 @@ export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
             </Button>
           </div>
 
-          {friendsData.map((friend, index) => (
+          {mockFriendsData.map((friend, index) => (
             <div key={friend.name} className="flex w-full flex-col items-center justify-center gap-3 px-2 py-3">
               <div className="flex w-full items-center gap-3">
                 <Avatar className="h-12 w-12">
@@ -270,7 +253,7 @@ export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
                 </div>
               </div>
 
-              {index < friendsData.length - 1 && <Separator className="w-full" />}
+              {index < mockFriendsData.length - 1 && <Separator className="w-full" />}
             </div>
           ))}
         </CardContent>

@@ -1,9 +1,10 @@
-import React, { JSX, useState, useEffect } from 'react';
+import React, { JSX } from 'react';
 import { Button } from '../components/button';
 import { Card, CardContent } from '../components/card';
 import { Progress } from '../components/progress';
 import { Separator } from '../components/separator';
-import { fetchUserProfile, fetchUserAchievements, getUser, fetchUserJobsApplied } from '../api/api';
+import { useUserProfile, useUserAchievements, useUser } from '../hooks/useApiQueries';
+import { useAppStore } from '../store/useAppStore';
 
 // This will be computed dynamically in the component
 
@@ -18,73 +19,19 @@ interface ProfileProps {
 }
 
 export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
-  const [userProfile, setUserProfile] = useState<{ xp: number; invite_code: string } | null>(null);
-  const [userInfo, setUserInfo] = useState<{ uid: string; email: string; displayName: string } | null>(null);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [achievementsLoading, setAchievementsLoading] = useState(true);
-  const [jobsApplied, setJobsApplied] = useState<number | null>(null);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        // Fetch user profile details (xp, invite_code from user_details route)
-        const profileData = await fetchUserProfile();
-        setUserProfile(profileData);
-
-        // Fetch user info (name, email from /auth/me route)
-        const userData = await getUser();
-        setUserInfo(userData);
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-        // Set default values if API fails
-        setUserProfile({ xp: 0, invite_code: 'N/A' });
-        setUserInfo(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchAchievementsData = async () => {
-      try {
-        setAchievementsLoading(true);
-        const data = await fetchUserAchievements();
-        // Sort achievements: Uncompleted first, then by XP (lower to higher)
-        const sortedAchievements = data.achievements.sort((a, b) => {
-          // Primary sort: uncompleted (false) before completed (true)
-          if (a.completed !== b.completed) {
-            return a.completed ? 1 : -1;
-          }
-          // Secondary sort: lower XP before higher XP
-          return a.xp - b.xp;
-        });
-        setAchievements(sortedAchievements);
-      } catch (error) {
-        console.error('Failed to fetch achievements:', error);
-        setAchievements([]);
-      } finally {
-        setAchievementsLoading(false);
-      }
-    };
-
-    const fetchStreakData = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchUserJobsApplied();
-        setJobsApplied(data.totalApplications);
-      } catch (error) {
-        console.error('Failed to fetch jobs applied data:', error);
-        setJobsApplied(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-    fetchAchievementsData();
-    fetchStreakData();
-  }, []);
+  const { data: userProfile, isLoading: loading } = useUserProfile();
+  const { data: userInfo } = useUser();
+  const { data: achievementsData, isLoading: achievementsLoading } = useUserAchievements();
+  
+  // Sort achievements: Uncompleted first, then by XP (lower to higher)
+  const achievements = achievementsData?.achievements ? achievementsData.achievements.sort((a, b) => {
+    // Primary sort: uncompleted (false) before completed (true)
+    if (a.completed !== b.completed) {
+      return a.completed ? 1 : -1;
+    }
+    // Secondary sort: lower XP before higher XP
+    return a.xp - b.xp;
+  }) : [];
 
   const totalXP = userProfile?.xp || 0;
   const currentLevel = Math.floor(totalXP / 100) + 1;
