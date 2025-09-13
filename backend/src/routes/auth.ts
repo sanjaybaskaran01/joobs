@@ -77,7 +77,7 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     // }
 
 
-    const EXTENSION_ID = "cnocepkcpblfbhpijcabnifmibogincm"
+    const EXTENSION_ID = "klidicnnopnodcnnimpggcldkgkcdbdk"
     const redirectURL = `chrome-extension://${EXTENSION_ID}/auth-callback.html?access_token=${tokens.access_token}&refresh_token=${tokens.refresh_token}`
     res.redirect(redirectURL)
   } catch (error) {

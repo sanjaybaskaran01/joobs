@@ -70,7 +70,7 @@ async function fetchNewEmails(
 // --- Step 2: Parse email with Claude ---
 async function parseEmail(
   emailContent: EmailContent
-): Promise<{ company: string; position: string; status: string }> {
+): Promise<{ company: string; position: string; status: string; logo: string }> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -86,8 +86,8 @@ async function parseEmail(
         {
           role: "user",
           content: `The email may or may not be a job application email. If it is, extract the company, position name, and application status from the email below.
-Status must be one of: applied, OA, interview, offer, rejected, indeterminate.
-Return JSON ONLY in the format: {"company": "...", "position": "...", "status": "..."}
+Status must be one of: applied, OA, interview, offer, rejected, indeterminate. If the position is specific to a year, include it in the position name. Provide an image link to the company logo if possible. If the email is NOT a job application email, return "indeterminate" for all fields.
+Return JSON ONLY in the format: {"company": "...", "position": "...", "status": "...", "logo": "..."}
 
 Email Subject: ${emailContent.subject}
 Email Sender: ${emailContent.sender}
@@ -107,6 +107,7 @@ ${emailContent.body}`,
 
   const data = await response.json();
   const content = data?.content?.[0]?.text;
+  console.log("Claude response content:", content);
 
   try {
     return JSON.parse(content);
@@ -115,6 +116,7 @@ ${emailContent.body}`,
       company: "indeterminate",
       position: "indeterminate",
       status: "indeterminate",
+      logo: "indeterminate",
     };
   }
 }
@@ -122,7 +124,7 @@ ${emailContent.body}`,
 // --- Step 3: Update jobApplications in Firestore ---
 async function updateApplication(
   userId: string,
-  parsed: { company: string; position: string; status: string },
+  parsed: { company: string; position: string; status: string; logo: string },
   date: Date
 ) {
   const db = getFirestore();

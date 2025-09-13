@@ -3,7 +3,7 @@ import { Button } from '../components/button';
 import { Card, CardContent } from '../components/card';
 import { Progress } from '../components/progress';
 import { Separator } from '../components/separator';
-import { fetchUserProfile, fetchUserAchievements, getUser } from '../api/api';
+import { fetchUserProfile, fetchUserAchievements, getUser, fetchUserJobsApplied } from '../api/api';
 
 // This will be computed dynamically in the component
 
@@ -23,6 +23,7 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
+  const [jobsApplied, setJobsApplied] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -67,8 +68,22 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
       }
     };
 
+    const fetchStreakData = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchUserJobsApplied();
+        setJobsApplied(data.totalApplications);
+      } catch (error) {
+        console.error('Failed to fetch jobs applied data:', error);
+        setJobsApplied(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUserData();
     fetchAchievementsData();
+    fetchStreakData();
   }, []);
 
   const totalXP = userProfile?.xp || 0;
@@ -89,7 +104,7 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
   const completedAchievements = achievements.filter(a => a.completed).length;
   const statsData = [
     {
-      value: '0', // This could be filled with jobs applied data if available
+      value: jobsApplied, // This could be filled with jobs applied data if available
       label: 'Jobs Applied',
     },
     {

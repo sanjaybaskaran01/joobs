@@ -17,7 +17,7 @@ api.interceptors.request.use(
     try {
       // const token = localStorage.getItem('authToken');
       const token =
-        'eyJhbGciOiJSUzI1NiIsImtpZCI6IjUwMDZlMjc5MTVhMTcwYWIyNmIxZWUzYjgxZDExNjU0MmYxMjRmMjAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vam9vYnMtNzFiY2UiLCJhdWQiOiJqb29icy03MWJjZSIsImF1dGhfdGltZSI6MTc1Nzc3MTc4NiwidXNlcl9pZCI6InRlc3QtdXNlci11aWQiLCJzdWIiOiJ0ZXN0LXVzZXItdWlkIiwiaWF0IjoxNzU3NzcxNzg2LCJleHAiOjE3NTc3NzUzODYsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnt9LCJzaWduX2luX3Byb3ZpZGVyIjoiY3VzdG9tIn19.Q4Ms84l7Q40EOaM6eN4knyKKUWYAhbnsahV4WwmqrhCF-IMo5AUYu6Ohcuy2mIuwBu1lHVB7HMYsuNS-sdBqvIK2W900zuoNPns9CaymAkYMcWQO9njNnB3qjuZIA8V6qEcoLQOaYrlg7ZbhNTeVFyzfjFnkccPJswqRQ0GbO4Hwh8zcZ_vW-7VmKDH5bFqy70EjRDBBtTie9mERlVj4PT4xjyYDwgi2O7Zi4wPAgKE7omBiKFOwC80-zQuuQbw4o1mZRPjIEh5INdLifeNGIW12l_ARBtHTFHpxKJrfRF0H6PB0wthXDdVgErJUuLt0TWLKzZV3Rl2hhlAKd62-Yw';
+        'eyJhbGciOiJSUzI1NiIsImtpZCI6IjUwMDZlMjc5MTVhMTcwYWIyNmIxZWUzYjgxZDExNjU0MmYxMjRmMjAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vam9vYnMtNzFiY2UiLCJhdWQiOiJqb29icy03MWJjZSIsImF1dGhfdGltZSI6MTc1Nzc3NzgyMCwidXNlcl9pZCI6InRlc3QtdXNlci11aWQiLCJzdWIiOiJ0ZXN0LXVzZXItdWlkIiwiaWF0IjoxNzU3Nzc3ODIwLCJleHAiOjE3NTc3ODE0MjAsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnt9LCJzaWduX2luX3Byb3ZpZGVyIjoiY3VzdG9tIn19.sLSGZ-ZGQ0boi7Sm0d3hzypu1yOmQSuqdn_NPNEgNHHLH2O8aEYl61T4PSpCZxopEHpXZaDl9X3dhvhOVYtir7dDk4b9mmXRu09ZPCRU5ZNJuiCmqipczuECAEvlPw3izWtz8FTEkbYQaL1FmMgTKONPafwMj_28OnX4Xufl5nznWhBya0c_ZRNIoRknjCIgP2MJGWqXWZlGhcZvdXgsKoIMxSzS_GoM6EVXOnStIk00wwQ_aBbursW9oBa4HHzYxY4MH4vJNxA-YthmOAPs6E-MEGk5ZsccYSXkF01elS5ds6jq6Z_gLzBU7rUsiXg9H4yiNpF9NFzrreqn6b1Avw';
       if (token) {
         // Merge existing headers into a plain object and cast to any to avoid AxiosHeaders type mismatch
         config.headers = {
@@ -66,7 +66,7 @@ export function setAuthToken(token: string | null) {
 
 export async function fetchUserJobsApplied() {
   try {
-    const response = await api.post<{ dates: string[]; currentStreak: number }>('/api/v1/jobs_applied_dates');
+    const response = await api.post<{ dates: string[]; currentStreak: number, totalApplications: number }>('/api/v1/jobs_applied_dates');
     return response.data;
   } catch (error) {
     console.error('Error fetching user jobs applied:', error);
