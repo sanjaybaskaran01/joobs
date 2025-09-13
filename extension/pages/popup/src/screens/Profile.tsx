@@ -20,7 +20,7 @@ interface ProfileProps {
 export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
   const [userProfile, setUserProfile] = useState<{ xp: number; invite_code: string } | null>(null);
 
-  const [userInfo, setUserInfo] = useState<{ xp:number; invite_code:string; name:string } | null>(null);
+  const [userInfo, setUserInfo] = useState<{ xp: number; invite_code: string; name: string } | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
@@ -133,7 +133,7 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
           </h1>
         </div>
 
-        <img className="h-24 w-24 object-contain sm:h-32 sm:w-32" alt="Icon" src="/icon.svg" />
+        <img className="h-24 w-24 object-contain sm:h-32 sm:w-32" alt="Profile" src="/popup/megaman.gif" />
 
         <div className="flex w-full items-center justify-center">
           <div className="text-center text-sm font-semibold text-[#9f9f9f] [font-family:'Noto_Sans',Helvetica] sm:text-base">
