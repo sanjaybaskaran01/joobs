@@ -16,9 +16,8 @@
 
 ## Demo Deck
 
-<iframe src="./demo/deck.pdf" width="100%" height="720" title="JobTrax Demo Deck">
-  Your browser does not support PDFs. Download the demo deck: <a href="./demo/deck.pdf">demo/deck.pdf</a>
-</iframe>
+<a href="./demo/deck.pdf">demo/deck.pdf</a>
+
 
 
 
