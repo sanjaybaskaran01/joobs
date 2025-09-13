@@ -19,7 +19,16 @@
 <a href="./demo/deck.pdf">demo/deck.pdf</a>
 
 
-<iframe style="border: 1px solid rgba(0, 0, 0, 0.1);" width="800" height="450" src="https://embed.figma.com/design/wXLhpMAoLp2d2rDrRd2NEA/JOOBS--Copy-?node-id=2001-9549&embed-host=share" allowfullscreen></iframe>
+
+
+## 🎨 Design System
+
+[![Figma Design](https://via.placeholder.com/800x450/f3f4f6/374151?text=JobTrax+Design+System)](https://www.figma.com/design/wXLhpMAoLp2d2rDrRd2NEA/JOOBS--Copy-?node-id=2001-9549)
+
+> **[📱 View Interactive Figma Prototype →](https://www.figma.com/design/wXLhpMAoLp2d2rDrRd2NEA/JOOBS--Copy-?node-id=2001-9549)**
+
+
+<iframe style="border: 1px solid rgba(0, 0, 0, 0.1);" width="800" height="450" src="https://embed.figma.com/proto/wXLhpMAoLp2d2rDrRd2NEA/JOOBS--Copy-?page-id=2001%3A9491&node-id=2001-9549&p=f&viewport=185%2C-330%2C0.18&scaling=contain&content-scaling=fixed&starting-point-node-id=2001%3A9549&show-proto-sidebar=1&embed-host=share" allowfullscreen></iframe>
 
 
 ## 📖 Overview  
