@@ -42,47 +42,50 @@ router.get("/google/callback", async (req: Request, res: Response) => {
 
     console.log('User authenticated:', userInfo);
 
-    // Fetch recent emails
-    let emailData = null;
-    let emailError = null;
-    
-    // const gmailService = createGmailService(tokens.access_token)
-    
+    // Generate Firebase custom token
+    const auth = getAdminAuth();
+    const firebaseToken = await auth.createCustomToken(userInfo.id!);
 
-    // const recentEmails = await gmailService.fetchRecentEmails({
-    //   maxResults: 10,
-    //   labelIds: ['INBOX']
-    // });
+    console.log(`USER_INFO_ID`, userInfo.id);
 
-    // emailData = recentEmails
+    const redirectURL = `chrome-extension://${process.env.EXTENSION_ID}/auth-callback.html?access_token=${tokens.access_token}&refresh_token=${tokens.refresh_token}&firebase_token=${firebaseToken}`;
 
-    // Return user info, tokens, and email data
-    const response: any = {
-      success: true,
-      userInfo,
-      tokens: {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expiry_date: tokens.expiry_date
-      },
-      message: 'Authentication successful'
-    };
+    console.log(`FIREBASE_TOKEN`, firebaseToken);
+    // Create the user if not exists
+    // Store the user info in the firebase database
+    const db = getAdminFirestore();
+    // Get userId of the authenticated user
+    const userDoc = await db.collection('users').doc(userInfo.id!).get();
+    if (!userDoc.exists) {
+      await db.collection('users').doc(userInfo.id!).set({
+        achievements: [],
+        friends: [],
+        name: userInfo.name,
+        xp: 0,
+        streak: 0
+      });
+      // Generate a 5 letter referral code
+      let inviteCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+      // Check if referral code already exists
+      const inviteDoc = await db.collection('inviteCode').doc(inviteCode).get();
+      while (inviteDoc.exists) {
+        // If exists, generate a new one (in practice, you might want a more robust method)
+        inviteCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const referralDoc = await db.collection('referralCodes').doc(inviteCode).get();
+        if (!referralDoc.exists) {
+          break;
+        }
+      }
+      await db.collection('inviteCode').doc(inviteCode).set({
+        userId: userInfo.id!,
+        createdAt: new Date()
+      });
+    }
 
-    // // Include email data if successfully fetched
-    // if (emailData) {
-    //   response.emails = emailData;
-    // } else if (emailError) {
-    //   response.emailError = emailError;
-    //   response.message += ' (Note: Email fetching failed)';
-    // }
-
-
-    const EXTENSION_ID = "klidicnnopnodcnnimpggcldkgkcdbdk"
-    const redirectURL = `chrome-extension://${EXTENSION_ID}/auth-callback.html?access_token=${tokens.access_token}&refresh_token=${tokens.refresh_token}`
-    res.redirect(redirectURL)
+    return res.redirect(redirectURL)
   } catch (error) {
     console.error("OAuth callback error:", error);
-    res.status(500).json({ error: "Authentication failed" });
+    return res.status(500).json({ error: "Authentication failed" });
   }
 });
 
