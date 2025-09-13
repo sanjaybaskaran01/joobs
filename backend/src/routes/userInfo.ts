@@ -68,9 +68,38 @@ router.post(
       await userRef.set({ user_chart: { x, y } }, { merge: true });
       console.log("Updated user_chart for user:", x, y);
 
-      res.json({ success: true });
+      res.json({ x, y });
     } catch (error) {
       console.error("Error in /refresh/user_chart:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// --- API Route: Get a friend's user_chart by name ---
+router.get(
+  "/friend_user_chart",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const friendName = req.query.friendName as string;
+      if (!friendName)
+        return res
+          .status(400)
+          .json({ error: "Missing friendName query parameter" });
+      const db = getFirestore();
+      const friendSnap = await db
+        .collection("users")
+        .where("name", "==", friendName)
+        .limit(1)
+        .get();
+      if (friendSnap.empty)
+        return res.status(404).json({ error: "Friend not found" });
+      const friendData = friendSnap.docs[0].data();
+      const user_chart = friendData?.user_chart || { x: [], y: [] };
+      res.json({ x: user_chart.x, y: user_chart.y });
+    } catch (error) {
+      console.error("Error in /friend_user_chart:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
@@ -256,14 +285,20 @@ router.get(
       const userId = (req as any).user?.uid;
       if (!userId) throw new Error("Missing userId from authMiddleware");
       const db = getFirestore();
-      const appsSnap = await db.collection("jobApplications").where("userId", "==", userId).get();
+      const appsSnap = await db
+        .collection("jobApplications")
+        .where("userId", "==", userId)
+        .get();
       const dates: string[] = appsSnap.docs
-        .map(doc => {
+        .map((doc) => {
           const data = doc.data();
-          if (data.applicationDate && typeof data.applicationDate.toDate === "function") {
-            return data.applicationDate.toDate().toISOString().split('T')[0];
+          if (
+            data.applicationDate &&
+            typeof data.applicationDate.toDate === "function"
+          ) {
+            return data.applicationDate.toDate().toISOString().split("T")[0];
           } else if (data.applicationDate) {
-            return new Date(data.applicationDate).toISOString().split('T')[0];
+            return new Date(data.applicationDate).toISOString().split("T")[0];
           } else {
             return null;
           }
@@ -288,12 +323,18 @@ router.get(
       const userId = (req as any).user?.uid;
       if (!userId) throw new Error("Missing userId from authMiddleware");
       const db = getFirestore();
-      const appsSnap = await db.collection("jobApplications").where("userId", "==", userId).get();
-      const applications = appsSnap.docs.map(doc => {
+      const appsSnap = await db
+        .collection("jobApplications")
+        .where("userId", "==", userId)
+        .get();
+      const applications = appsSnap.docs.map((doc) => {
         const data = doc.data();
         // Get last statusHistory entry
         let lastUpdated = "";
-        if (Array.isArray(data.statusHistory) && data.statusHistory.length > 0) {
+        if (
+          Array.isArray(data.statusHistory) &&
+          data.statusHistory.length > 0
+        ) {
           const last = data.statusHistory[data.statusHistory.length - 1];
           if (last.date && typeof last.date.toDate === "function") {
             lastUpdated = last.date.toDate().toISOString();
@@ -326,18 +367,27 @@ router.post(
       const userId = (req as any).user?.uid;
       if (!userId) throw new Error("Missing userId from authMiddleware");
       const { invite_code } = req.body;
-      if (!invite_code) return res.status(400).json({ error: "Missing invite_code in body" });
+      if (!invite_code)
+        return res.status(400).json({ error: "Missing invite_code in body" });
 
       const db = getFirestore();
       // Find invite code document
-      const inviteDoc = await db.collection("inviteCode").doc(invite_code).get();
-      if (!inviteDoc.exists) return res.status(404).json({ error: "Invalid invite code" });
+      const inviteDoc = await db
+        .collection("inviteCode")
+        .doc(invite_code)
+        .get();
+      if (!inviteDoc.exists)
+        return res.status(404).json({ error: "Invalid invite code" });
       const friendUserId = inviteDoc.data()?.userId;
-      if (!friendUserId) return res.status(404).json({ error: "Invite code missing userId" });
+      if (!friendUserId)
+        return res.status(404).json({ error: "Invite code missing userId" });
 
       // Add friendUserId to user's friends array (if not already present)
       const userRef = db.collection("users").doc(userId);
-      await userRef.set({ friends: FieldValue.arrayUnion(friendUserId) }, { merge: true });
+      await userRef.set(
+        { friends: FieldValue.arrayUnion(friendUserId) },
+        { merge: true }
+      );
 
       res.json({ success: true });
     } catch (error) {
