@@ -32,6 +32,74 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
     // Secondary sort: lower XP before higher XP
     return a.xp - b.xp;
   }) : [];
+  const [userProfile, setUserProfile] = useState<{ xp: number; invite_code: string } | null>(null);
+
+  const [userInfo, setUserInfo] = useState<{ xp:number; invite_code:string; name:string } | null>(null);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
+  const [jobsApplied, setJobsApplied] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        // Fetch user profile details (xp, invite_code from user_details route)
+        const profileData = await fetchUserProfile();
+        setUserProfile(profileData);
+
+        // Fetch user info (name, email from /auth/me route)
+        const userData = await getUser();
+        setUserInfo(userData);
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        // Set default values if API fails
+        setUserProfile({ xp: 0, invite_code: 'N/A' });
+        setUserInfo(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchAchievementsData = async () => {
+      try {
+        setAchievementsLoading(true);
+        const data = await fetchUserAchievements();
+        // Sort achievements: Uncompleted first, then by XP (lower to higher)
+        const sortedAchievements = data.achievements.sort((a, b) => {
+          // Primary sort: uncompleted (false) before completed (true)
+          if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1;
+          }
+          // Secondary sort: lower XP before higher XP
+          return a.xp - b.xp;
+        });
+        setAchievements(sortedAchievements);
+      } catch (error) {
+        console.error('Failed to fetch achievements:', error);
+        setAchievements([]);
+      } finally {
+        setAchievementsLoading(false);
+      }
+    };
+
+    const fetchStreakData = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchUserJobsApplied();
+        setJobsApplied(data.totalApplications);
+      } catch (error) {
+        console.error('Failed to fetch jobs applied data:', error);
+        setJobsApplied(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+    fetchAchievementsData();
+    fetchStreakData();
+  }, []);
 
   const totalXP = userProfile?.xp || 0;
   const currentLevel = Math.floor(totalXP / 100) + 1;
@@ -75,7 +143,7 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
       <main className="flex flex-1 flex-col items-center gap-3 overflow-y-auto bg-white p-4 sm:p-6">
         <div className="flex w-full items-center justify-center">
           <h1 className="text-center text-xl font-semibold text-[#343232] [font-family:'Noto_Sans',Helvetica] sm:text-2xl">
-            {loading ? 'Loading...' : userInfo?.displayName || 'Unknown User'}
+            {loading ? 'Loading...' : userInfo?.name || 'Unknown User'}
           </h1>
         </div>
 

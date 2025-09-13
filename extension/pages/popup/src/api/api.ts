@@ -11,13 +11,13 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-// Attach token from localStorage on each request (synchronous)
+
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     try {
-      // const token = localStorage.getItem('authToken');
-      const token =
-        'eyJhbGciOiJSUzI1NiIsImtpZCI6IjUwMDZlMjc5MTVhMTcwYWIyNmIxZWUzYjgxZDExNjU0MmYxMjRmMjAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vam9vYnMtNzFiY2UiLCJhdWQiOiJqb29icy03MWJjZSIsImF1dGhfdGltZSI6MTc1Nzc3OTY3MiwidXNlcl9pZCI6InRlc3QtdXNlci11aWQiLCJzdWIiOiJ0ZXN0LXVzZXItdWlkIiwiaWF0IjoxNzU3Nzc5NjcyLCJleHAiOjE3NTc3ODMyNzIsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnt9LCJzaWduX2luX3Byb3ZpZGVyIjoiY3VzdG9tIn19.U4t5Deo67An_jtuxJOAUVssncXX-onodFKQ4Sqc1of1H7Iip1qXPcflbm3YK3MFpM4jMq8yV9FO0P4RWpvOhVMxDHNIoiThEqB3rqRx7whb8m_QWHpK4MBAPuMOPLFRwRpOu9Oq_B-2l9GmN32204ukQhP8SoqzkGS9ADdGsnuK8rHGAyeKErja7YWUdzOlpk-U4hzy4RHMahp80r56P96K0YJm6ucb97enJ0sR5yPu4M2Us-FcH1-rkaa-N_YdT0UIVGO3XPcospM5Ck9jgg8baP-rMti9zQIRr9qB75HkTzQpicqbfO7dooFcrK8hxHM2E1-shdmJsX0qHXmHolg';
+      // const token = localStorage.getItem('job_tracker_firebase_token');
+      const storage = await chrome.storage.local.get('job_tracker_firebase_token');
+      const token = (storage && (storage as any).job_tracker_firebase_token) ?? null;
       if (token) {
         // Merge existing headers into a plain object and cast to any to avoid AxiosHeaders type mismatch
         config.headers = {
@@ -135,7 +135,7 @@ export async function refreshApplicationStatuses() {
 
 export async function fetchUserProfile() {
   try {
-    const response = await api.get<{ xp: number; invite_code: string }>('/api/v1/user_details');
+    const response = await api.get<{ xp: number; invite_code: string; name: string }>('/api/v1/user_details');
     // Store this in local storage for easy access
     localStorage.setItem('inviteCode', response.data.invite_code);
     return response.data;
@@ -159,11 +159,37 @@ export async function fetchUserAchievements() {
 
 export async function getUser() {
   try {
-    const response = await api.get<{ uid: string; email: string; displayName: string }>('/auth/me');
+    const response = await api.get<{ xp: number; invite_code: string; name: string }>('/api/v1/user_details');
     return response.data;
   } catch (error) {
-    console.error('Error fetching username:', error);
+    console.error('Error fetching user details:', error);
     return null;
+  }
+}
+
+export async function addFriendByCode(inviteCode: string){
+  try {
+    const response = await api.post<{ success: boolean; message: string }>('/api/v1/add_friend', {
+      invite_code: inviteCode,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error adding friend by code:', error);
+    throw error;
+  }
+}
+
+// Force application refresh
+export async function forceRefreshApplications(accessToken:string) {
+  try {
+    const response = await api.post<{ success: boolean }>('/api/v1/refresh/applications',{
+      accessToken: accessToken
+    });
+    return response.data;
+  } catch (error) {
+    console.log(error)
+    console.error('Error forcing application refresh:', error);
+    throw error;
   }
 }
 

@@ -7,12 +7,16 @@ import TrackerScreen from './components/TrackerScreen';
 import { Home } from './screens/Home';
 import { Friends } from './screens/Friends';
 import { Profile } from './screens/Profile';
+import { AddFriend } from './screens/AddFriend';
+import { forceRefreshApplications } from './api/api';
 import { queryClient } from './lib/queryClient';
 import { useAppStore } from './store/useAppStore';
 import { useDataPrefetch } from './hooks/useDataPrefetch';
 
 const ACCESS_TOKEN_KEY = 'job_tracker_access_token';
 const REFRESH_TOKEN_KEY = 'job_tracker_refresh_token';
+const FIREBASE_TOKEN_KEY = 'job_tracker_firebase_token';
+
 
 const PopupContent = () => {
   const { isAuthenticated, currentScreen, setAuthenticated, setCurrentScreen } = useAppStore();
@@ -22,9 +26,17 @@ const PopupContent = () => {
 
   useEffect(() => {
     // Check for tokens in chrome.storage.local
-    chrome.storage.local.get([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY], result => {
-      if (result[ACCESS_TOKEN_KEY] && result[REFRESH_TOKEN_KEY]) {
-        setAuthenticated(true);
+    chrome.storage.local.get([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, FIREBASE_TOKEN_KEY], async result => {
+      if (result[ACCESS_TOKEN_KEY] && result[REFRESH_TOKEN_KEY] && result[FIREBASE_TOKEN_KEY]) {
+        setIsAuthenticated(true);
+        
+        // Force refresh applications when popup opens and user is authenticated
+        try {
+          await forceRefreshApplications(result[ACCESS_TOKEN_KEY]);
+          console.log('Applications refreshed on popup open');
+        } catch (error) {
+          console.error('Failed to refresh applications on popup open:', error);
+        }
       }
     });
 
@@ -55,6 +67,10 @@ const PopupContent = () => {
     setCurrentScreen('home');
   };
 
+  const navigateToAddFriend = () => {
+    setCurrentScreen('addFriend');
+  };
+
   const renderScreen = () => {
     if (!isAuthenticated) {
       return <SignInScreen />;
@@ -62,9 +78,11 @@ const PopupContent = () => {
 
     switch (currentScreen) {
       case 'friends':
-        return <Friends onBack={navigateToHome} />;
+        return <Friends onBack={navigateToHome} onNavigateToAddFriend={navigateToAddFriend} />;
       case 'profile':
         return <Profile onBack={navigateToHome} />;
+      case 'addFriend':
+        return <AddFriend onBack={() => setCurrentScreen('friends')} />;
       case 'home':
       default:
         return <Home onNavigateToFriends={navigateToFriends} onNavigateToProfile={navigateToProfile} />;

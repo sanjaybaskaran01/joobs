@@ -15,18 +15,83 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/avatar';
 import { Button } from '../components/button';
 import { Card, CardContent } from '../components/card';
 import { Separator } from '../components/separator';
-import { useUserChart, useUserFriends } from '../hooks/useApiQueries';
+import { useUserChart, fetchUserFriends, fetchUserProfile, fetchUserJobsApplied, getUser, useUserFriends } from '../hooks/useApiQueries';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 interface FriendsProps {
   onBack: () => void;
+  onNavigateToAddFriend: () => void;
 }
 
-export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
-  const { data: chartData, isLoading: chartLoading } = useUserChart();
-  const { data: friendsData, isLoading: friendsLoading } = useUserFriends();
+export const Friends = ({ onBack, onNavigateToAddFriend }: FriendsProps): JSX.Element => {
+  const [chartData, setChartData] = useState<{ x: string[]; y: number[] } | null>(null);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [friends, setFriends] = useState<{ name: string; xp: number; streak: number }[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<{ xp: number; invite_code: string } | null>(null);
+  const [userInfo, setUserInfo] = useState<{ uid: string; email: string; name: string } | null>(null);
+  const [streakData, setStreakData] = useState<{ dates: string[]; streak: number } | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        setChartLoading(true);
+        const data = await fetchUserChart();
+        setChartData(data);
+      } catch (error) {
+        console.error('Failed to fetch chart data:', error);
+        setChartData(null);
+      } finally {
+        setChartLoading(false);
+      }
+    };
+
+    const fetchFriendsData = async () => {
+      try {
+        setFriendsLoading(true);
+        const data = await fetchUserFriends();
+        setFriends(data.friends);
+      } catch (error) {
+        console.error('Failed to fetch friends data:', error);
+        setFriends([]);
+      } finally {
+        setFriendsLoading(false);
+      }
+    };
+
+    const fetchUserData = async () => {
+      try {
+        setUserLoading(true);
+        
+        // Fetch user profile (XP and invite code)
+        const profileData = await fetchUserProfile();
+        setUserProfile(profileData);
+
+        // Fetch user info (name, email)
+        const userData = await getUser();
+        setUserInfo(userData);
+
+        // Fetch streak data
+        const jobsData = await fetchUserJobsApplied();
+        setStreakData(jobsData);
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        // Set default values if API fails
+        setUserProfile({ xp: 0, invite_code: 'N/A' });
+        setUserInfo(null);
+        setStreakData({ dates: [], streak: 0 });
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchChartData();
+    fetchFriendsData();
+    fetchUserData();
+  }, []);
 
   // Format dates for better display
   const formatDate = (dateString: string) => {
@@ -121,38 +186,22 @@ export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
     },
   };
 
-  const mockFriendsData = [
-    {
-      name: 'Pzc',
-      level: 'LV.12 Job Hunter',
-      streakDays: '20 streak days',
-      avatar: '/icon-3.svg',
-    },
-    {
-      name: 'Jobhunter102',
-      level: 'LV.10 Job Hunter',
-      streakDays: '17 streak days',
-      avatar: '/icon-4.svg',
-    },
-    {
-      name: 'Recruitme12',
-      level: 'LV.23 Job Hunter',
-      streakDays: '9 streak days',
-      avatar: '/icon-2.svg',
-    },
-    {
-      name: 'Mindful999',
-      level: 'LV.52 Job Hunter',
-      streakDays: '8 streak days',
-      avatar: '/icon-5.svg',
-    },
-    {
-      name: 'HandofGod333',
-      level: 'LV.99 Job Hunter',
-      streakDays: '6 streak days',
-      avatar: '/icon-1.svg',
-    },
-  ];
+  // Generate level from XP (same logic as in Profile)
+  const getLevel = (xp: number) => Math.floor(xp / 100) + 1;
+
+  // Transform API data to display format
+  const friendsData = friends.map(friend => ({
+    name: friend.name,
+    level: `LV.${getLevel(friend.xp)} Job Hunter`,
+    streakDays: `${friend.streak} streak days`,
+    avatar: '/icon.svg', // Default avatar, could be made dynamic later
+  }));
+
+  // User data for the "You" section
+  const userXP = userProfile?.xp || 0;
+  const userLevel = getLevel(userXP);
+  const userStreak = streakData?.streak || 0;
+  const userName = userInfo?.name || 'You';
 
   return (
     <div className="flex w-full min-w-[350px] flex-col">
@@ -195,19 +244,25 @@ export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
         <CardContent className="flex flex-col items-center justify-center gap-4 p-4">
           <div className="flex w-full items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src="/icon.svg" alt="You" />
-              <AvatarFallback>Y</AvatarFallback>
+              <AvatarImage src="/icon.svg" alt={userName} />
+              <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
 
             <div className="flex flex-1 items-center justify-between">
               <div className="flex flex-col items-start justify-center">
-                <div className="text-lg font-semibold leading-tight text-[#0076ff]">You</div>
+                <div className="text-lg font-semibold leading-tight text-[#0076ff]">
+                  {userLoading ? 'Loading...' : userName}
+                </div>
 
-                <div className="text-sm font-bold leading-tight text-[#9f9f9f]">LV.1 Job Hunter</div>
+                <div className="text-sm font-bold leading-tight text-[#9f9f9f]">
+                  {userLoading ? 'LV.-- Job Hunter' : `LV.${userLevel} Job Hunter`}
+                </div>
               </div>
 
               <div className="flex items-center">
-                <div className="text-base font-semibold leading-tight text-[#0076ff]">13 streak days</div>
+                <div className="text-base font-semibold leading-tight text-[#0076ff]">
+                  {userLoading ? '-- streak days' : `${userStreak} streak days`}
+                </div>
               </div>
             </div>
           </div>
@@ -222,40 +277,61 @@ export const Friends = ({ onBack }: FriendsProps): JSX.Element => {
             <div className="text-lg font-semibold leading-tight text-[#343232]">Friends &amp; Rankings</div>
 
             <Button
-              variant="outline"
+              onClick={onNavigateToAddFriend}
               className="h-auto rounded-[16px] border border-solid border-[#0076ff] bg-white px-4 py-2 hover:bg-gray-50">
               <div className="whitespace-nowrap text-sm font-semibold leading-tight text-[#0076ff]">Add a friend</div>
             </Button>
           </div>
 
-          {mockFriendsData.map((friend, index) => (
-            <div key={friend.name} className="flex w-full flex-col items-center justify-center gap-3 px-2 py-3">
-              <div className="flex w-full items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={friend.avatar} alt={friend.name} />
-                  <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                </Avatar>
+          {friendsLoading ? (
+            // Loading skeleton for friends
+            <div className="flex w-full flex-col gap-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={`loading-${index}`} className="flex w-full items-center gap-3 px-2 py-3">
+                  <div className="h-12 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                  </div>
+                  <div className="h-3 bg-gray-200 rounded animate-pulse w-20"></div>
+                </div>
+              ))}
+            </div>
+          ) : friendsData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="text-[#9f9f9f] text-sm mb-2">No friends yet</div>
+              <div className="text-[#9f9f9f] text-xs">Add friends to see their progress!</div>
+            </div>
+          ) : (
+            friendsData.map((friend, index) => (
+              <div key={friend.name} className="flex w-full flex-col items-center justify-center gap-3 px-2 py-3">
+                <div className="flex w-full items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={friend.avatar} alt={friend.name} />
+                    <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
 
-                <div className="flex min-w-0 flex-1 items-center justify-between">
-                  <div className="flex min-w-0 flex-1 flex-col items-start justify-center">
-                    <div className="w-full truncate text-base font-semibold leading-tight text-[#343232]">
-                      {friend.name}
+                  <div className="flex min-w-0 flex-1 items-center justify-between">
+                    <div className="flex min-w-0 flex-1 flex-col items-start justify-center">
+                      <div className="w-full truncate text-base font-semibold leading-tight text-[#343232]">
+                        {friend.name}
+                      </div>
+
+                      <div className="text-sm font-bold leading-tight text-[#9f9f9f]">{friend.level}</div>
                     </div>
 
-                    <div className="text-sm font-bold leading-tight text-[#9f9f9f]">{friend.level}</div>
-                  </div>
-
-                  <div className="flex flex-shrink-0 items-center">
-                    <div className="whitespace-nowrap text-sm font-semibold leading-tight text-[#0076ff]">
-                      {friend.streakDays}
+                    <div className="flex flex-shrink-0 items-center">
+                      <div className="whitespace-nowrap text-sm font-semibold leading-tight text-[#0076ff]">
+                        {friend.streakDays}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {index < mockFriendsData.length - 1 && <Separator className="w-full" />}
-            </div>
-          ))}
+                {index < friendsData.length - 1 && <Separator className="w-full" />}
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
     </div>
