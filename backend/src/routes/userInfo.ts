@@ -157,8 +157,9 @@ router.get(
 
       const xp = data?.xp || 0;
       const invite_code = data?.invite_code || "";
+      const name = data?.name || "";
 
-      res.json({ xp, invite_code });
+      res.json({ xp, invite_code, name });
     } catch (error) {
       console.error("Error in /user_details:", error);
       res.status(500).json({ error: "Internal server error" });

@@ -2,6 +2,8 @@
 const urlParams = new URLSearchParams(window.location.search);
 const accessToken = urlParams.get('access_token');
 const refreshToken = urlParams.get('refresh_token');
+const firebaseToken = urlParams.get('firebase_token');
+
 
 if (accessToken && refreshToken) {
   // Send tokens to the extension
@@ -10,6 +12,7 @@ if (accessToken && refreshToken) {
       type: 'OAUTH_TOKENS',
       accessToken: accessToken,
       refreshToken: refreshToken,
+      firebaseToken: firebaseToken,
     },
     response => {
       console.log('Tokens sent to extension:', response);

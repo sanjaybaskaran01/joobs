@@ -19,7 +19,8 @@ interface ProfileProps {
 
 export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
   const [userProfile, setUserProfile] = useState<{ xp: number; invite_code: string } | null>(null);
-  const [userInfo, setUserInfo] = useState<{ uid: string; email: string; displayName: string } | null>(null);
+
+  const [userInfo, setUserInfo] = useState<{ xp:number; invite_code:string; name:string } | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
@@ -128,7 +129,7 @@ export const Profile = ({ onBack }: ProfileProps): JSX.Element => {
       <main className="flex flex-1 flex-col items-center gap-3 overflow-y-auto bg-white p-4 sm:p-6">
         <div className="flex w-full items-center justify-center">
           <h1 className="text-center text-xl font-semibold text-[#343232] [font-family:'Noto_Sans',Helvetica] sm:text-2xl">
-            {loading ? 'Loading...' : userInfo?.displayName || 'Unknown User'}
+            {loading ? 'Loading...' : userInfo?.name || 'Unknown User'}
           </h1>
         </div>
 
