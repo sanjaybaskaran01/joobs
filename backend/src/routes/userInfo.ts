@@ -156,8 +156,17 @@ router.get(
       const data = userSnap.exists ? userSnap.data() : null;
 
       const xp = data?.xp || 0;
-      const invite_code = data?.invite_code || "";
       const name = data?.name || "";
+
+      // Read invite_code from inviteCode collection. Invite code is the doc ID
+      const inviteCodeSnap = await db
+        .collection("inviteCode")
+        .where("userId", "==", userId)
+        .limit(1)
+        .get();
+      const invite_code = inviteCodeSnap.empty
+        ? null
+        : inviteCodeSnap.docs[0].id;
 
       res.json({ xp, invite_code, name });
     } catch (error) {

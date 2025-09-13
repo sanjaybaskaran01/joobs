@@ -8,7 +8,7 @@ import {
 
 const router = Router();
 
-const XP_PER_APPLICATION = 10;
+const XP_PER_APPLICATION = 3;
 
 interface EmailContent {
   sender: string | null;
@@ -42,7 +42,7 @@ async function fetchNewEmails(
   const timestampEmails = await gmailService.fetchEmailsFromTimestamp(
     sinceTimestamp,
     {
-      maxResults: 2,
+      maxResults: 10,
       labelIds: ["INBOX"],
     }
   );
@@ -265,6 +265,7 @@ async function reprocessAchievements(userId: string) {
     .map((d) => new Date(d))
     .sort((a, b) => a.getTime() - b.getTime());
 
+    console.log("All achievements", ACHIEVEMENTS);
   for (const a of ACHIEVEMENTS) {
     if (unlocked.includes(a.name)) continue;
 
