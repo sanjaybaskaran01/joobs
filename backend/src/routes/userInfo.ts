@@ -1,3 +1,7 @@
+// Helper to get YYYY-MM-DD string from Date
+function toDayString(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
 import { Router, Request, Response } from "express";
 import { authMiddleware } from "../middleware/auth";
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
@@ -10,7 +14,7 @@ const router = Router();
 
 // --- API Route ---
 router.post(
-  "/refresh/user_chart",
+  "/user_chart",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
@@ -47,7 +51,7 @@ router.post(
       let cumulative = 0;
       let lastDate = null;
       for (const date of appDates) {
-        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateStr = date.toISOString().split("T")[0]; // YYYY-MM-DD
         if (lastDate !== dateStr) {
           cumulative = y.length > 0 ? y[y.length - 1] + 1 : 1;
           x.push(dateStr);
@@ -61,12 +65,283 @@ router.post(
 
       // Store as { x: [...], y: [...] }
       const userRef = db.collection("users").doc(userId);
-      await userRef.set({ cumulativeApplications: { x, y } }, { merge: true });
-      console.log("Updated cumulativeApplications for user:", x, y);
+      await userRef.set({ user_chart: { x, y } }, { merge: true });
+      console.log("Updated user_chart for user:", x, y);
 
       res.json({ success: true });
     } catch (error) {
       console.error("Error in /refresh/user_chart:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// --- API Route: Calculate and store current streak ---
+router.post("/streak", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.uid;
+    if (!userId) throw new Error("Missing userId from authMiddleware");
+
+    const db = getFirestore();
+    const existingAppsSnap = await db
+      .collection("jobApplications")
+      .where("userId", "==", userId)
+      .get();
+
+    // Extract and sort application dates
+    const appDates: Date[] = existingAppsSnap.docs
+      .map((doc) => {
+        const data = doc.data();
+        if (
+          data.applicationDate &&
+          typeof data.applicationDate.toDate === "function"
+        ) {
+          return data.applicationDate.toDate();
+        } else if (data.applicationDate) {
+          return new Date(data.applicationDate);
+        } else {
+          return null;
+        }
+      })
+      .filter((d): d is Date => d !== null)
+      .sort((a, b) => a.getTime() - b.getTime());
+    console.log("Application Dates for streak calculation:", appDates);
+    // Calculate streak based on unique days, counting consecutive days ending today
+    let streak = 0;
+    if (appDates.length > 0) {
+      // Get unique days in descending order
+      const uniqueDays = Array.from(new Set(appDates.map(toDayString))).sort(
+        (a, b) => new Date(b).getTime() - new Date(a).getTime()
+      );
+      const todayStr = toDayString(new Date());
+      let dayCursor = todayStr;
+      let i = 0;
+      while (i < uniqueDays.length) {
+        if (uniqueDays[i] === dayCursor) {
+          streak++;
+          // Move to previous day
+          const prev = new Date(dayCursor);
+          prev.setDate(prev.getDate() - 1);
+          dayCursor = toDayString(prev);
+          i++;
+        } else {
+          // Streak broken
+          break;
+        }
+      }
+    }
+
+    // Store streak in user's Firestore document
+    const userRef = db.collection("users").doc(userId);
+    await userRef.set({ currentStreak: streak }, { merge: true });
+
+    res.json({ success: true, currentStreak: streak });
+  } catch (error) {
+    console.error("Error in /refresh/streak:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- API Route: Get friends info ---
+router.get("/friends", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.uid;
+    if (!userId) throw new Error("Missing userId from authMiddleware");
+
+    const db = getFirestore();
+    // Assume user's document has a 'friends' array of userIds
+    const userRef = db.collection("users").doc(userId);
+    const userSnap = await userRef.get();
+    const userData = userSnap.data();
+    const friendIds: string[] = userData?.friends || [];
+
+    if (!friendIds.length) {
+      return res.json({ friends: [] });
+    }
+
+    // Fetch all friends' info by document ID
+    const friends: { name: string; xp: number; streak: number }[] = [];
+    for (const fid of friendIds) {
+      const friendDoc = await db.collection("users").doc(fid).get();
+      if (friendDoc.exists) {
+        const d = friendDoc.data();
+        friends.push({
+          name: d?.name || "",
+          xp: d?.xp || 0,
+          streak: d?.streak || 0,
+        });
+      }
+    }
+    res.json({ friends });
+  } catch (error) {
+    console.error("Error in /friends:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- API Route: Get user's XP ---
+router.get("/xp", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.uid;
+    if (!userId) throw new Error("Missing userId from authMiddleware");
+    const db = getFirestore();
+    const userSnap = await db.collection("users").doc(userId).get();
+    const xp = userSnap.exists ? userSnap.data()?.xp || 0 : 0;
+    res.json({ xp });
+  } catch (error) {
+    console.error("Error in /xp:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- API Route: Get user's invite_code ---
+router.get(
+  "/invite_code",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) throw new Error("Missing userId from authMiddleware");
+      const db = getFirestore();
+      const userSnap = await db.collection("users").doc(userId).get();
+      const invite_code = userSnap.exists
+        ? userSnap.data()?.invite_code || ""
+        : "";
+      res.json({ invite_code });
+    } catch (error) {
+      console.error("Error in /invite_code:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// --- API Route: Get user's achievements with completion status ---
+router.get(
+  "/achievements",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) throw new Error("Missing userId from authMiddleware");
+      const db = getFirestore();
+      // Get all achievements
+      const achievementsSnap = await db.collection("achievements").get();
+      const allAchievements = achievementsSnap.docs.map((doc) => doc.data());
+      // Get user's unlocked achievements
+      const userSnap = await db.collection("users").doc(userId).get();
+      const userAchievements: string[] = userSnap.exists
+        ? userSnap.data()?.achievements || []
+        : [];
+
+      const achievements = allAchievements.map((a) => ({
+        description: a.description || "",
+        xp: a.xpReward || 0,
+        completed: userAchievements.includes(a.name),
+      }));
+
+      res.json({ achievements });
+    } catch (error) {
+      console.error("Error in /achievements:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// --- API Route: Get user's job application dates ---
+router.get(
+  "/jobs_applied_dates",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) throw new Error("Missing userId from authMiddleware");
+      const db = getFirestore();
+      const appsSnap = await db.collection("jobApplications").where("userId", "==", userId).get();
+      const dates: string[] = appsSnap.docs
+        .map(doc => {
+          const data = doc.data();
+          if (data.applicationDate && typeof data.applicationDate.toDate === "function") {
+            return data.applicationDate.toDate().toISOString().split('T')[0];
+          } else if (data.applicationDate) {
+            return new Date(data.applicationDate).toISOString().split('T')[0];
+          } else {
+            return null;
+          }
+        })
+        .filter((d): d is string => d !== null);
+      // Sort
+      dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+      res.json({ dates });
+    } catch (error) {
+      console.error("Error in /jobs_applied_dates:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// --- API Route: Get user's application statuses ---
+router.get(
+  "/application_status",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) throw new Error("Missing userId from authMiddleware");
+      const db = getFirestore();
+      const appsSnap = await db.collection("jobApplications").where("userId", "==", userId).get();
+      const applications = appsSnap.docs.map(doc => {
+        const data = doc.data();
+        // Get last statusHistory entry
+        let lastUpdated = "";
+        if (Array.isArray(data.statusHistory) && data.statusHistory.length > 0) {
+          const last = data.statusHistory[data.statusHistory.length - 1];
+          if (last.date && typeof last.date.toDate === "function") {
+            lastUpdated = last.date.toDate().toISOString();
+          } else if (last.date) {
+            lastUpdated = new Date(last.date).toISOString();
+          }
+        }
+        return {
+          icon: "",
+          company_name: data.company || "",
+          last_updated: lastUpdated,
+          status: data.status || "",
+          email_url: "",
+        };
+      });
+      res.json({ applications });
+    } catch (error) {
+      console.error("Error in /application_status:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// --- API Route: Add a friend by invite code ---
+router.post(
+  "/add_friend",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) throw new Error("Missing userId from authMiddleware");
+      const { invite_code } = req.body;
+      if (!invite_code) return res.status(400).json({ error: "Missing invite_code in body" });
+
+      const db = getFirestore();
+      // Find invite code document
+      const inviteDoc = await db.collection("inviteCode").doc(invite_code).get();
+      if (!inviteDoc.exists) return res.status(404).json({ error: "Invalid invite code" });
+      const friendUserId = inviteDoc.data()?.userId;
+      if (!friendUserId) return res.status(404).json({ error: "Invite code missing userId" });
+
+      // Add friendUserId to user's friends array (if not already present)
+      const userRef = db.collection("users").doc(userId);
+      await userRef.set({ friends: FieldValue.arrayUnion(friendUserId) }, { merge: true });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error in /add_friend:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
