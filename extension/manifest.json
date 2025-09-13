@@ -3,23 +3,15 @@
   "name": "Joobs",
   "version": "1.0",
   "permissions": ["activeTab", "storage", "identity"],
-  "icons": {
-    "16": "public/icons/icon-16.png",
-    "48": "public/icons/icon-48.png",
-    "128": "public/icons/icon-128.png"
-  },
+  "icons": {},
   "action": {
-    "default_popup": "public/index.html",
-    "default_icon": {
-      "16": "public/icons/icon-16.png",
-      "48": "public/icons/icon-48.png",
-      "128": "public/icons/icon-128.png"
-    }
+    "default_popup": "index.html",
+    "default_icon": {}
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["dist/content-script.bundle.js"]
+      "js": ["static/js/main.aa104a97.js"]
     }
   ]
 }
