@@ -13,12 +13,11 @@
   Your browser does not support the video tag. Download the demo: <a href="./demo/prototype.mov">demo/prototype.mov</a>
 </video>
 
+> **[📱 Play with Interactive Figma Prototype →](https://www.figma.com/design/wXLhpMAoLp2d2rDrRd2NEA/JOOBS--Copy-?node-id=2001-9549)**
 
 ## Demo Deck
 
 <a href="./demo/deck.pdf">demo/deck.pdf</a>
-
-
 
 
 ## 📖 Overview  
