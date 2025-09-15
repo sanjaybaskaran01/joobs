@@ -4,7 +4,6 @@ const accessToken = urlParams.get('access_token');
 const refreshToken = urlParams.get('refresh_token');
 const firebaseToken = urlParams.get('firebase_token');
 
-
 if (accessToken && refreshToken) {
   // Send tokens to the extension
   chrome.runtime.sendMessage(
